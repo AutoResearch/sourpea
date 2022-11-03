@@ -84,6 +84,11 @@ class Design:
                 else:
                     i += 1
         weights_expected = [lvl['weight'] for lvl in self._counter_balanced_names_weights]
+
+        # normalize weights
+        total_expected = sum(weights_expected)
+        weights_expected = [w/total_expected*len(sequence) for w in weights_expected]
+
         return chisquare(weights_empirical, weights_expected)
 
 
