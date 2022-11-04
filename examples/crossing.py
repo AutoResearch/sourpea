@@ -1,4 +1,4 @@
-from sourpea.primitives import Level, Factor, Design
+from sourpea.primitives import Level, Factor, Block
 
 # counterbalance 1
 # sequence to test on
@@ -14,11 +14,11 @@ word = Factor('word', ['red', 'green'])
 color = Factor('color', ['red', 'green'])
 
 # defining the design (counterbalancing)
-design = Design([word, color])
+block_1 = Block(design=[word, color], crossing=[word, color])
 
 # getting the results
-chisquare = design.test(test_sequence_1)
-print('sequence1, design1: ', chisquare.pvalue)
+test_1 = block_1.test(test_sequence_1)
+print('sequence1, design1: ', test_1['pValue'], test_1['levels'])
 
 # counterbalance with weighted factors
 # sequence to test on
@@ -36,11 +36,11 @@ word_2 = Factor('word', [Level('red', 2), 'green'])
 color_2 = Factor('color', ['red', 'green'])
 
 # defining the design
-design_2 = Design([color_2, word_2])
+block_2 = Block(design=[color_2, word_2], crossing=[word_2, color_2])
 
 # getting the result
-chisquare_2 = design_2.test(test_sequence_2)
-print('sequence2, design2: ', chisquare_2.pvalue)
+test_2 = block_2.test(test_sequence_2)
+print('sequence2, design2: ', test_2['pValue'], test_2['levels'])
 
 # counterbalance with more weights
 # sequence to test on
@@ -67,15 +67,15 @@ word_3 = Factor('word', [Level('red', 2), Level('green', 1)])
 color_3 = Factor('color', [Level('red', 2), Level('green', 3)])
 
 # defining design
-design_3 = Design([word_3, color_3])
+block_3 = Block(design=[word_3, color_3], crossing=[word_3, color_3])
 
 # getting the results
-chisquare_3 = design_3.test(test_sequence_3)
-print('sequence3, design3: ', chisquare_3.pvalue)
+test_3 = block_3.test(test_sequence_3)
+print('sequence3, design3: ', test_3['pValue'], test_3['levels'])
 
 # cross validating (this should result in lower p-values)
-chisquare_ = design.test(test_sequence_2)
-print('sequence2, design1: ', chisquare_.pvalue, 'not balanced')
+test_4 = block_1.test(test_sequence_2)
+print('sequence2, design1: ', test_4['pValue'], test_4['levels'])
 
-chisquare_2_ = design_2.test(test_sequence_1)
-print('sequence1, design2: ', chisquare_2_.pvalue, 'not balanced')
+test_5 = block_2.test(test_sequence_1)
+print('sequence1, design2: ', test_5['pValue'], test_5['levels'])
