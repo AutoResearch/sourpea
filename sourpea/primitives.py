@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, List
+from typing import Callable, List, Tuple
 from scipy.stats import chisquare
 
 
@@ -65,38 +65,156 @@ class TransitionDerivationWindow(DerivationWindow):
         self.width = 2
 
 
+class Constraint:
+
+    def __init__(self):
+        pass
+
+    def test(self, sequence: List):
+        return True
+
+
+class _NumberConstraint:
+    trials: int
+
+    def __init__(self, trials: int):
+        super().__init__()
+        self.trials = trials
+
+
+class MinimumTrials(_NumberConstraint):
+
+    def test(self, sequence: List):
+        return len(sequence) >= self.trials
+
+
+class _KConstraint(_NumberConstraint):
+    factor: Factor
+    levels: List[Level]
+
+    def __init__(self, trials: int, level: Tuple[Factor, List[Level]]):
+        super().__init__(trials)
+        if isinstance(level, Factor):
+            self.factor = level
+            self.levels = level.levels
+        if isinstance(level, Tuple):
+            self.factor = level[0]
+            if isinstance(level[1], List):
+                self.levels = level[1]
+            else:
+                self.levels = [level[1]]
+        for i in range(len(self.levels)):
+            if isinstance(self.levels[i], Level):
+                self.levels[i] = self.levels[i].name
+
+
+class AtMostKInARow(_KConstraint):
+
+    def test(self, sequence: List):
+        name = self.factor.name
+        for level in self.levels:
+            atMost = 0
+            for trial in sequence:
+                if trial[name] == level:
+                    atMost += 1
+                    if atMost > self.trials:
+                        return False
+                else:
+                    atMost = 0
+        return True
+
+
+class AtLeastKInARow(_KConstraint):
+
+    def test(self, sequence: List):
+        name = self.factor.name
+        for level in self.levels:
+            atLeast = 0
+            for trial in sequence:
+                if trial[name] == level:
+                    atLeast += 1
+                else:
+                    if atLeast < self.trials and atLeast != 0:
+                        return False
+                    atLeast = 0
+        return True
+
+
+class ExactlyKInARow(_KConstraint):
+
+    def test(self, sequence: List):
+        is_exact = True
+        name = self.factor.name
+        for level in self.levels:
+            indexes = []
+            for i in range(len(sequence)):
+                trial = sequence[i]
+                if trial[name] == level and (i < 0 or sequence[i - 1][name] != level):
+                    indexes.append(i)
+                if trial[name] == level and (i >= len(sequence) - 1 or sequence[i + 1][name] != level):
+                    indexes.append(i)
+            for i in range(1, len(indexes), 2):
+                is_exact = is_exact and indexes[i] - indexes[i - 1] == self.trials - 1
+        return is_exact
+
+
+class ExactlyK(_KConstraint):
+
+    def test(self, sequence: List):
+        name = self.factor.name
+        for level in self.levels:
+            nr = 0
+            for trial in sequence:
+                if trial[name] == level:
+                    nr += 1
+            if nr != self.trials:
+                return False
+        return True
+
+
 class Block:
     design: List[Factor]
     crossing: List[Factor]
+    constraints: List[Constraint]
     _counter_balanced_levels: List[Level]
     _counter_balanced_names_weights: List
 
-    def __init__(self, design: List[Factor] = None, crossing: List[Factor] = None):
+    def __init__(self, design: List[Factor] = None, crossing: List[Factor] = None,
+                 constraints: List[Constraint] = None):
         self.design = design
         self.crossing = crossing
-        if not crossing:
-            return
-        levels = [[lvl] for lvl in self.crossing[0].levels]
-        i = 1
-        while i < len(self.crossing):
-            list_2 = self.crossing[i].levels
-            tmp = [x + [y] for x in levels for y in list_2]
-            levels = tmp
-            i += 1
-        self._counter_balanced_levels = levels
-        self._counter_balanced_names_weights = []
-        for level in levels:
-            name = [lvl.name for lvl in level]
-            weight = 1
-            for lvl in level:
-                weight *= lvl.weight
-            res = {'name': name, 'weight': weight}
-            self._counter_balanced_names_weights.append(res)
+        self.constraints = constraints
+        if not self.design:
+            self.design = []
+        if not self.crossing:
+            self.crossing = []
+        if not self.constraints:
+            self.constraints = []
+        if self.crossing:
+            levels = [[lvl] for lvl in self.crossing[0].levels]
+            i = 1
+            while i < len(self.crossing):
+                list_2 = self.crossing[i].levels
+                tmp = [x + [y] for x in levels for y in list_2]
+                levels = tmp
+                i += 1
+            self._counter_balanced_levels = levels
+            self._counter_balanced_names_weights = []
+            for level in levels:
+                name = [lvl.name for lvl in level]
+                weight = 1
+                for lvl in level:
+                    weight *= lvl.weight
+                res = {'name': name, 'weight': weight}
+                self._counter_balanced_names_weights.append(res)
 
     def test(self, sequence: List):
         chi_2 = self._test_crossing(sequence)
         derived_test = self._test_levels(sequence)
-        return {'pValue': chi_2.pvalue, 'levels': derived_test}
+        constraint_test = []
+        for c in self.constraints:
+            constraint_test.append(c.test(sequence))
+        return {'pValue': chi_2.pvalue, 'levels': derived_test, 'constraints': constraint_test}
 
     def _test_crossing(self, sequence: List):
         if not self.crossing:
@@ -121,7 +239,7 @@ class Block:
             for lvl in factor.levels:
                 if isinstance(lvl, DerivedLevel):
                     if lvl.window.width > 1:
-                        max_width = max(lvl.window.width-1, max_width)
+                        max_width = max(lvl.window.width - 1, max_width)
 
         total_expected = sum(weights_expected) + max_width
         weights_expected = [w / total_expected * len(sequence) for w in weights_expected]
