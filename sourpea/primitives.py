@@ -58,15 +58,24 @@ class WithinTrialDerivationWindow(DerivationWindow):
         self.width = 1
 
 
+class TransitionDerivationWindow(DerivationWindow):
+
+    def __init__(self, predicate: Callable, factors: List[Factor]):
+        super().__init__(predicate, factors)
+        self.width = 2
+
+
 class Block:
     design: List[Factor]
     crossing: List[Factor]
     _counter_balanced_levels: List[Level]
     _counter_balanced_names_weights: List
 
-    def __init__(self, design: List[Factor], crossing: List[Factor]):
-        self.design= design
+    def __init__(self, design: List[Factor] = None, crossing: List[Factor] = None):
+        self.design = design
         self.crossing = crossing
+        if not crossing:
+            return
         levels = [[lvl] for lvl in self.crossing[0].levels]
         i = 1
         while i < len(self.crossing):
@@ -90,6 +99,8 @@ class Block:
         return {'pValue': chi_2.pvalue, 'levels': derived_test}
 
     def _test_crossing(self, sequence: List):
+        if not self.crossing:
+            return chisquare([1, 1], [1, 1])
         weights_empirical = [0 for _ in self._counter_balanced_names_weights]
         for t in sequence:
             level = []
@@ -104,7 +115,15 @@ class Block:
         weights_expected = [lvl['weight'] for lvl in self._counter_balanced_names_weights]
 
         # normalize weights
-        total_expected = sum(weights_expected)
+        # adjusting for the first trials if there is a transition window in crossing
+        max_width = 0
+        for factor in self.crossing:
+            for lvl in factor.levels:
+                if isinstance(lvl, DerivedLevel):
+                    if lvl.window.width > 1:
+                        max_width = max(lvl.window.width-1, max_width)
+
+        total_expected = sum(weights_expected) + max_width
         weights_expected = [w / total_expected * len(sequence) for w in weights_expected]
 
         return chisquare(weights_empirical, weights_expected)
@@ -118,7 +137,8 @@ class Block:
                 if isinstance(lvl, DerivedLevel):
                     is_derived = True
             if is_derived:
-                for trial in sequence:
+                for i in range(len(sequence)):
+                    trial = sequence[i]
                     for lvl in factor.levels:
                         if isinstance(lvl, DerivedLevel):
                             window = lvl.window
@@ -127,6 +147,12 @@ class Block:
                                 lvl_t = trial[factor.name]
                                 if window.predicate(*args):
                                     test[factor.name] = (lvl_t == lvl.name) and test[factor.name]
+                            elif i >= (window.width - 1):
+                                s = i - (window.width - 1)
+                                e = i + 1
+                                sequence_ = sequence[s:e]
+                                args = [[trial[factor_w.name] for trial in sequence_] for factor_w in window.factors]
+                                lvl_t = sequence_[-1][factor.name]
+                                if window.predicate(*args):
+                                    test[factor.name] = (lvl_t == lvl.name) and test[factor.name]
         return test
-
-
