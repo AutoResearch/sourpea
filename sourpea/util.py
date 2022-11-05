@@ -36,5 +36,3 @@ def _long(sequence):
     return long
 
 
-df_test = pd.read_csv('sequence_0.csv')
-print(df_test.to_dict('list'))
