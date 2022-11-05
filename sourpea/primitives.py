@@ -74,6 +74,26 @@ class Constraint:
         return True
 
 
+class Exclude(Constraint):
+    factor: str
+    level: str
+
+    def __init__(self, factor: Factor, level: Level):
+        if isinstance(factor, Factor):
+            self.factor = Factor.name
+        self.factor = factor
+        if isinstance(level, Level):
+            self.level = level.name
+        else:
+            self.level = level
+
+    def test(self, sequence: List):
+        for trial in sequence:
+            if trial[self.factor] == self.level:
+                return False
+        return True
+
+
 class _NumberConstraint:
     trials: int
 
@@ -190,15 +210,26 @@ class Block:
             self.crossing = []
         if not self.constraints:
             self.constraints = []
+        # get exclude constraints:
+        exclude_constraints = {}
+        for factor in self.design:
+            exclude_constraints[factor.name] = []
+        for c in self.constraints:
+            if isinstance(c, Exclude):
+                exclude_constraints[c.factor] += [c.level]
+
         if self.crossing:
-            levels = [[lvl] for lvl in self.crossing[0].levels]
+            levels = [[lvl] if not lvl.name in exclude_constraints[self.crossing[0].name] else [] for lvl in
+                      self.crossing[0].levels]
             i = 1
             while i < len(self.crossing):
                 list_2 = self.crossing[i].levels
-                tmp = [x + [y] for x in levels for y in list_2]
+                tmp = [x + [y] if not y.name in exclude_constraints[self.crossing[i].name] else [] for x in levels
+                       for y in list_2]
                 levels = tmp
                 i += 1
             self._counter_balanced_levels = levels
+            # self._counter_balanced_levels = list(filter(lambda x: x['name'] != [], self._counter_balanced_levels))
             self._counter_balanced_names_weights = []
             for level in levels:
                 name = [lvl.name for lvl in level]
@@ -207,6 +238,9 @@ class Block:
                     weight *= lvl.weight
                 res = {'name': name, 'weight': weight}
                 self._counter_balanced_names_weights.append(res)
+        self._counter_balanced_levels = list(filter(lambda x: x != [], self._counter_balanced_levels))
+        self._counter_balanced_names_weights = list(
+            filter(lambda x: x['name'] != [], self._counter_balanced_names_weights))
 
     def test(self, sequence: List):
         chi_2 = self._test_crossing(sequence)
