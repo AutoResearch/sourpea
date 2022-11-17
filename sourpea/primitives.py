@@ -80,8 +80,9 @@ class Exclude(Constraint):
 
     def __init__(self, factor: Factor, level: Level):
         if isinstance(factor, Factor):
-            self.factor = Factor.name
-        self.factor = factor
+            self.factor = factor.name
+        else:
+            self.factor = factor
         if isinstance(level, Level):
             self.level = level.name
         else:
@@ -278,6 +279,9 @@ class Block:
         total_expected = sum(weights_expected) + max_width
         weights_expected = [w / total_expected * len(sequence) for w in weights_expected]
 
+        sum_empirical = sum(weights_empirical)
+        sum_expected = sum(weights_expected)
+        weights_expected = [sum_empirical*w/sum_expected for w in weights_expected]
         return chisquare(weights_empirical, weights_expected)
 
     def _test_levels(self, sequence: List):
@@ -307,4 +311,6 @@ class Block:
                                 lvl_t = sequence_[-1][factor.name]
                                 if window.predicate(*args):
                                     test[factor.name] = (lvl_t == lvl.name) and test[factor.name]
+                                    if (lvl_t != lvl.name):
+                                        print(i, sequence_)
         return test
