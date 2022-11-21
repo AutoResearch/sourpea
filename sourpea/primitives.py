@@ -58,11 +58,20 @@ class WithinTrialDerivationWindow(DerivationWindow):
         self.width = 1
 
 
+# Aliases
+WithinTrial = WithinTrialDerivationWindow
+
+
+
 class TransitionDerivationWindow(DerivationWindow):
 
     def __init__(self, predicate: Callable, factors: List[Factor]):
         super().__init__(predicate, factors)
         self.width = 2
+
+
+# Aliases
+Transition = TransitionDerivationWindow
 
 
 class Constraint:
@@ -281,7 +290,7 @@ class Block:
 
         sum_empirical = sum(weights_empirical)
         sum_expected = sum(weights_expected)
-        weights_expected = [sum_empirical*w/sum_expected for w in weights_expected]
+        weights_expected = [sum_empirical * w / sum_expected for w in weights_expected]
         return chisquare(weights_empirical, weights_expected)
 
     def _test_levels(self, sequence: List):
