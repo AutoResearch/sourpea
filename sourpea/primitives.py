@@ -24,7 +24,7 @@ class DerivedLevel(Level):
 
 
 class Factor:
-    """"An independent variable in a factorial experiment. Factors are composed
+    """An independent variable in a factorial experiment. Factors are composed
     of :class:`Levels <.Level>` and come in two flavors:
     """
     name: str
@@ -60,7 +60,6 @@ class WithinTrialDerivationWindow(DerivationWindow):
 
 # Aliases
 WithinTrial = WithinTrialDerivationWindow
-
 
 
 class TransitionDerivationWindow(DerivationWindow):
@@ -143,14 +142,14 @@ class AtMostKInARow(_KConstraint):
     def test(self, sequence: List):
         name = self.factor.name
         for level in self.levels:
-            atMost = 0
+            at_most = 0
             for trial in sequence:
                 if trial[name] == level:
-                    atMost += 1
-                    if atMost > self.trials:
+                    at_most += 1
+                    if at_most > self.trials:
                         return False
                 else:
-                    atMost = 0
+                    at_most = 0
         return True
 
 
@@ -159,14 +158,14 @@ class AtLeastKInARow(_KConstraint):
     def test(self, sequence: List):
         name = self.factor.name
         for level in self.levels:
-            atLeast = 0
+            at_least = 0
             for trial in sequence:
                 if trial[name] == level:
-                    atLeast += 1
+                    at_least += 1
                 else:
-                    if atLeast < self.trials and atLeast != 0:
+                    if at_least < self.trials and at_least != 0:
                         return False
-                    atLeast = 0
+                    at_least = 0
         return True
 
 
@@ -229,12 +228,12 @@ class Block:
                 exclude_constraints[c.factor] += [c.level]
 
         if self.crossing:
-            levels = [[lvl] if not lvl.name in exclude_constraints[self.crossing[0].name] else [] for lvl in
+            levels = [[lvl] if lvl.name not in exclude_constraints[self.crossing[0].name] else [] for lvl in
                       self.crossing[0].levels]
             i = 1
             while i < len(self.crossing):
                 list_2 = self.crossing[i].levels
-                tmp = [x + [y] if not y.name in exclude_constraints[self.crossing[i].name] else [] for x in levels
+                tmp = [x + [y] if y.name not in exclude_constraints[self.crossing[i].name] else [] for x in levels
                        for y in list_2]
                 levels = tmp
                 i += 1
@@ -316,10 +315,11 @@ class Block:
                                 s = i - (window.width - 1)
                                 e = i + 1
                                 sequence_ = sequence[s:e]
+                                # indexing (0 is current trial, -1 is previous ...)
+                                sequence_ = sequence_[-1] + sequence_[:-1]
                                 args = [[trial[factor_w.name] for trial in sequence_] for factor_w in window.factors]
                                 lvl_t = sequence_[-1][factor.name]
                                 if window.predicate(*args):
                                     test[factor.name] = (lvl_t == lvl.name) and test[factor.name]
-                                    if (lvl_t != lvl.name):
-                                        print(i, sequence_)
+
         return test
