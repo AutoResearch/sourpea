@@ -51,6 +51,9 @@ class DerivationWindow:
         self.width = width
 
 
+Window = DerivationWindow
+
+
 class WithinTrialDerivationWindow(DerivationWindow):
 
     def __init__(self, predicate: Callable, factors: List[Factor]):
@@ -316,7 +319,7 @@ class Block:
                                 e = i + 1
                                 sequence_ = sequence[s:e]
                                 # indexing (0 is current trial, -1 is previous ...)
-                                sequence_ = sequence_[-1] + sequence_[:-1]
+                                sequence_ = [sequence_[-1]] + sequence_[:-1]
                                 args = [[trial[factor_w.name] for trial in sequence_] for factor_w in window.factors]
                                 lvl_t = sequence_[-1][factor.name]
                                 if window.predicate(*args):
