@@ -1,5 +1,5 @@
 from sourpea.primitives import Factor, DerivedLevel, DerivationWindow, Block, TransitionDerivationWindow, Level, Exclude
-import pandas as pd
+import panads as pd
 
 PATHS = [f'kaneEtAl/ckm_2_back_{l}.txt' for l in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']]
 PATHS_THREE = [f'kaneEtAl/ckm_3_back_{l}.txt' for l in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']]
@@ -10,7 +10,7 @@ def test_sequence_two_back(trial_sequence, name):
     letter = Factor('letter', ['b', 'f', 'm', 'q', 'k', 'x', 'r', 'h'])
 
     def is_target(letters):
-        return letters[0] == letters[2]
+        return letters[0] == letters[-2]
 
     def is_not_target(letters):
         return not is_target(letters)
@@ -21,7 +21,7 @@ def test_sequence_two_back(trial_sequence, name):
     target = Factor('target', [one_t, two_t])
 
     def is_one_back(letters):
-        return letters[0] == letters[1]
+        return letters[0] == letters[-2]
 
     def is_not_one_back(letters):
         return not is_one_back(letters)
@@ -32,7 +32,7 @@ def test_sequence_two_back(trial_sequence, name):
     one_back = Factor('one_back', [one_o, two_o])
 
     def is_three_back(letters):
-        return letters[0] == letters[3]
+        return letters[0] == letters[-2]
 
     def is_not_three_back(letters):
         return not is_three_back(letters)
@@ -43,16 +43,16 @@ def test_sequence_two_back(trial_sequence, name):
     three_back = Factor('three_back', [one_three, zero_three])
 
     def is_control_target(letters):
-        return is_target(letters) and letters[2] != letters[1]
+        return is_target(letters) and letters[0] != letters[-1]
 
     def is_experimental_target(letters):
-        return is_target(letters) and letters[2] == letters[1]
+        return is_target(letters) and letters[0] == letters[-1]
 
     def is_control_foil(letters):
-        return is_not_target(letters) and letters[2] != letters[1]
+        return is_not_target(letters) and letters[0] != letters[-1]
 
     def is_experimental_foil(letters):
-        return is_not_target(letters) and letters[2] == letters[1]
+        return is_not_target(letters) and letters[0] == letters[-1]
 
     one_one_0 = DerivedLevel('1/1/0', DerivationWindow(is_control_target, [letter], 3), 6 / 48)
     one_two_0 = DerivedLevel('1/2/0', DerivationWindow(is_experimental_target, [letter], 3), 2 / 48)

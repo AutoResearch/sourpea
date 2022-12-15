@@ -321,7 +321,7 @@ class Block:
                                 # indexing (0 is current trial, -1 is previous ...)
                                 sequence_ = [sequence_[-1]] + sequence_[:-1]
                                 args = [[trial[factor_w.name] for trial in sequence_] for factor_w in window.factors]
-                                lvl_t = sequence_[-1][factor.name]
+                                lvl_t = sequence_[0][factor.name]
                                 if window.predicate(*args):
                                     test[factor.name] = (lvl_t == lvl.name) and test[factor.name]
 
