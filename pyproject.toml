@@ -4,7 +4,7 @@ build-backend="hatchling.build"
 
 [project]
 name="sourpea"
-version="0.0.2"
+version="0.0.4"
 authors=[{name="Younes Strittmatter", email="younes_strittmatter@brown.edu"},]
 description="declarative language in python for testing experiment sequences for counterbalance."
 requires-python= ">=3.7"
@@ -13,8 +13,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+readme = "README.md"
+
+
 
 [project.urls]
 "Homepage" = "https://github.com/AutoResearch/sourpea"
 "Bug Tracker" = "https://github.com/AutoResearch/sourpea/issues"
-

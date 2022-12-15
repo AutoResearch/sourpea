@@ -1,1 +1,2 @@
 scipy
+sweetpea>=0.2.2

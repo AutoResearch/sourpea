@@ -241,7 +241,7 @@ for p in PATHS:
 # for p in PATHS_THREE:
 #    test_three_back(p)
 
-paths = [f'sweetKaneEtAl/test_{str(i)}_0.csv' for i in range(2,8)]
+paths = [f'sweetKaneEtAl/test_{str(i)}_0.csv' for i in range(1,7)]
 for p in paths:
     print(p)
     test_two_back_csv(p)
