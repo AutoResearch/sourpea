@@ -28,8 +28,8 @@ exactlyKInARow = ExactlyKInARow(2, orientation)
 exactlyKInARow_2 = ExactlyKInARow(3, (direction, Level('up')))
 exactlyK = ExactlyK(3, (direction, 'up'))
 
-block = Block(constraints=[minimum_trials, atMostKInARow, atLeastKInARow, exactlyKInARow, exactlyK])
-block_2 = Block(constraints=[minimum_trials_2, atMostKInARow_2, atLeastKInARow_2, exactlyKInARow_2, exactlyK])
+block = Block(design=[direction,orientation],crossing=[direction], constraints=[minimum_trials, atMostKInARow, atLeastKInARow, exactlyKInARow, exactlyK])
+block_2 = Block(design=[direction,orientation],crossing=[direction],constraints=[minimum_trials_2, atMostKInARow_2, atLeastKInARow_2, exactlyKInARow_2, exactlyK])
 
 test = block.test(test_sequence)
 test_2 = block.test(test_sequence_2)
