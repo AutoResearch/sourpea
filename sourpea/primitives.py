@@ -128,16 +128,19 @@ class _KConstraint(_NumberConstraint):
         super().__init__(trials)
         if isinstance(level, Factor):
             self.factor = level
-            self.levels = level.levels
+            levels = level.levels
         if isinstance(level, Tuple):
             self.factor = level[0]
             if isinstance(level[1], List):
-                self.levels = level[1]
+                levels = level[1]
             else:
-                self.levels = [level[1]]
+                levels = [level[1]]
+        self.levels = []
         for i in range(len(self.levels)):
             if isinstance(self.levels[i], Level):
-                self.levels[i] = self.levels[i].name
+                self.levels.append(levels[i].name)
+            else:
+                self.levels.append(levels[i])
 
 
 class AtMostKInARow(_KConstraint):
@@ -223,20 +226,20 @@ class Block:
         if not self.constraints:
             self.constraints = []
         # get exclude constraints:
-        exclude_constraints = {}
+        self.exclude_constraints = {}
         for factor in self.design:
-            exclude_constraints[factor.name] = []
+            self.exclude_constraints[factor.name] = []
         for c in self.constraints:
             if isinstance(c, Exclude):
-                exclude_constraints[c.factor] += [c.level]
+                self.exclude_constraints[c.factor] += [c.level]
 
         if self.crossing:
-            levels = [[lvl] if lvl.name not in exclude_constraints[self.crossing[0].name] else [] for lvl in
+            levels = [[lvl] if lvl.name not in self.exclude_constraints[self.crossing[0].name] else [] for lvl in
                       self.crossing[0].levels]
             i = 1
             while i < len(self.crossing):
                 list_2 = self.crossing[i].levels
-                tmp = [x + [y] if y.name not in exclude_constraints[self.crossing[i].name] else [] for x in levels
+                tmp = [x + [y] if y.name not in self.exclude_constraints[self.crossing[i].name] else [] for x in levels
                        for y in list_2]
                 levels = tmp
                 i += 1
